@@ -1,5 +1,7 @@
 import { PrismaClient, Site, Role, MainRCA, CodeScope, CodeStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { Prisma } from "@prisma/client"
+
 
 const prisma = new PrismaClient();
 
@@ -230,7 +232,7 @@ async function main() {
         action: 'CODE_APPROVED',
         entityType: 'rca_code',
         entityId: rcaCode1.id,
-        before: null,
+        before: Prisma.JsonNull,
         after: JSON.parse(JSON.stringify(rcaCode1)),
         actorId: adminUser.id,
       },
