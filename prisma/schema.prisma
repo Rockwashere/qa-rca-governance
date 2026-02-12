@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Site {
+  UAE
+  EG
+  KSA
+}
+
+enum Role {
+  QA_MEMBER
+  QA_LEAD
+  MANAGER
+  ADMIN
+}
+
+enum MainRCA {
+  AGENT
+  PROCESS
+  TECHNOLOGY
+  CUSTOMER
+}
+
+enum CodeScope {
+  GLOBAL
+  SITE
+}
+
+enum CodeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  DEPRECATED
+  MERGED
+}
+
+enum DecisionType {
+  APPROVED
+  APPROVED_WITH_EDITS
+  REJECTED
+  MERGED
+  DEPRECATED
+}
+
+enum ReactionType {
+  AGREE
+  DISAGREE
+  SUGGEST_EXISTING
+  SUGGEST_RENAME
+  SUGGEST_MERGE
+}
+
+model User {
+  id         String   @id @default(cuid())
+  fullName   String   @map("full_name")
+  email      String   @unique
+  password   String
+  site       Site
+  role       Role     @default(QA_MEMBER)
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  createdCodes    RcaCode[]    @relation("CreatedBy")
+  approvedCodes   RcaCode[]    @relation("ApprovedBy")
+  rejectedCodes   RcaCode[]    @relation("RejectedBy")
+  comments        Comment[]
+  decisions       Decision[]
+  auditLogs       AuditLog[]
+  caseExamples    CaseExample[]
+
+  @@map("users")
+}
+
+model RcaCode {
+  id                    String     @id @default(cuid())
+  scope                 CodeScope  @default(GLOBAL)
+  site                  Site?
+  status                CodeStatus @default(PENDING)
+  mainRca               MainRCA    @map("main_rca")
+  rca1                  String?
+  rca2                  String?
+  rca3                  String?
+  rca4                  String?
+  rca5                  String?
+  definition            String
+  useWhen               String?    @map("use_when")
+  dontUseWhen           String?    @map("dont_use_when")
+  examples              Json       @default("[]")
+  tags                  Json       @default("[]")
+  rejectReason          String?    @map("reject_reason")
+  version               Int        @default(1)
+
+  createdById           String     @map("created_by_id")
+  createdBy             User       @relation("CreatedBy", fields: [createdById], references: [id])
+
+  approvedById          String?    @map("approved_by_id")
+  approvedBy            User?      @relation("ApprovedBy", fields: [approvedById], references: [id])
+
+  rejectedById          String?    @map("rejected_by_id")
+  rejectedBy            User?      @relation("RejectedBy", fields: [rejectedById], references: [id])
+
+  mergedIntoId          String?    @map("merged_into_id")
+  mergedInto            RcaCode?   @relation("MergedInto", fields: [mergedIntoId], references: [id])
+  mergedFrom            RcaCode[]  @relation("MergedInto")
+
+  deprecatedReplacedById String?   @map("deprecated_replaced_by_id")
+  deprecatedReplacedBy   RcaCode?  @relation("DeprecatedReplacement", fields: [deprecatedReplacedById], references: [id])
+  deprecatedReplacements RcaCode[] @relation("DeprecatedReplacement")
+
+  comments              Comment[]
+  decisions             Decision[]
+  caseExamples          CaseExample[]
+
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
+
+  @@map("rca_codes")
+}
+
+model Comment {
+  id          String        @id @default(cuid())
+  entityType  String        @map("entity_type") // 'proposal' | 'code'
+  entityId    String        @map("entity_id")
+  content     String
+  reaction    ReactionType?
+
+  userId      String        @map("user_id")
+  user        User          @relation(fields: [userId], references: [id])
+
+  rcaCodeId   String?       @map("rca_code_id")
+  rcaCode     RcaCode?      @relation(fields: [rcaCodeId], references: [id])
+
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@map("comments")
+}
+
+model Decision {
+  id            String       @id @default(cuid())
+  decisionType  DecisionType @map("decision_type")
+  reason        String?
+
+  proposalId    String       @map("proposal_id")
+  proposal      RcaCode      @relation(fields: [proposalId], references: [id])
+
+  decidedById   String       @map("decided_by_id")
+  decidedBy     User         @relation(fields: [decidedById], references: [id])
+
+  editedFields  Json?        @map("edited_fields")
+  mergeTargetId String?      @map("merge_target_id")
+
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  @@map("decisions")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  before      Json?
+  after       Json?
+
+  actorId     String   @map("actor_id")
+  actor       User     @relation(fields: [actorId], references: [id])
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+model CaseExample {
+  id          String   @id @default(cuid())
+  caseId      String   @map("case_id")
+  channel     String   // voice, email, chat
+  summary     String
+  notes       String?
+  status      String   @default("DRAFT") // DRAFT, FINAL_AGREED
+
+  codeId      String   @map("code_id")
+  code        RcaCode  @relation(fields: [codeId], references: [id])
+
+  site        Site
+
+  createdById String   @map("created_by_id")
+  createdBy   User     @relation(fields: [createdById], references: [id])
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("case_examples")
+}
