@@ -121,8 +121,20 @@ export async function POST(
 
       // Create audit log
       await createAuditLog({
-        action: `PROPOSAL_${decisionType}`,
-        entityType: "rca_code",
+import type { AuditAction } from "@/lib/audit"; // or wherever AuditAction is exported from
+
+const action: AuditAction =
+  decisionType === "APPROVED"
+    ? "PROPOSAL_APPROVED"
+    : "PROPOSAL_REJECTED";
+
+await createAuditLog({
+  action,
+  entityType: "rca_code",
+  entityId: params.id,
+  actorId: user.id,
+  // ...
+});        entityType: "rca_code",
         entityId: params.id,
         actorId: user.id,
         before: beforeState,
