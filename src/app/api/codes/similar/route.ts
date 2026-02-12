@@ -52,6 +52,8 @@ export async function GET(request: NextRequest) {
         rca1: code.rca1 || "",
         rca2: code.rca2 || "",
         rca3: code.rca3 || "",
+        rca4: (code as any).rca4 || "",
+        rca5: (code as any).rca5 || "",
         tags: (code.tags as string[]) || [],
         mainRca: code.mainRca,
         status: code.status,
