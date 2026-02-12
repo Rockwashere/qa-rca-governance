@@ -1,22 +1,28 @@
-import prisma from './prisma';
+import { Prisma } from "@prisma/client";
+import prisma from "./prisma";
 
 export type AuditAction =
-  | 'CODE_CREATED'
-  | 'CODE_APPROVED'
-  | 'CODE_APPROVED_WITH_EDITS'
-  | 'CODE_REJECTED'
-  | 'CODE_MERGED'
-  | 'CODE_DEPRECATED'
-  | 'CODE_EDITED'
-  | 'PROPOSAL_CREATED'
-  | 'PROPOSAL_EDITED'
-  | 'PROPOSAL_DELETED'
-  | 'USER_CREATED'
-  | 'USER_UPDATED'
-  | 'USER_ROLE_CHANGED'
-  | 'USER_DEACTIVATED'
-  | 'USER_ACTIVATED'
-  | 'COMMENT_ADDED';
+  | "CODE_CREATED"
+  | "CODE_APPROVED"
+  | "CODE_APPROVED_WITH_EDITS"
+  | "CODE_REJECTED"
+  | "CODE_MERGED"
+  | "CODE_DEPRECATED"
+  | "CODE_EDITED"
+  | "PROPOSAL_CREATED"
+  | "PROPOSAL_EDITED"
+  | "PROPOSAL_DELETED"
+  | "PROPOSAL_APPROVED"
+  | "PROPOSAL_APPROVED_WITH_EDITS"
+  | "PROPOSAL_REJECTED"
+  | "PROPOSAL_MERGED"
+  | "PROPOSAL_DEPRECATED"
+  | "USER_CREATED"
+  | "USER_UPDATED"
+  | "USER_ROLE_CHANGED"
+  | "USER_DEACTIVATED"
+  | "USER_ACTIVATED"
+  | "COMMENT_ADDED";
 
 export async function createAuditLog(params: {
   action: AuditAction;
@@ -32,8 +38,9 @@ export async function createAuditLog(params: {
       entityType: params.entityType,
       entityId: params.entityId,
       actorId: params.actorId,
-      before: params.before ?? null,
-      after: params.after ?? null,
+      // Prisma JSON fields: use Prisma.JsonNull instead of plain null
+      before: (params.before ?? Prisma.JsonNull) as any,
+      after: (params.after ?? Prisma.JsonNull) as any,
     },
   });
 }
