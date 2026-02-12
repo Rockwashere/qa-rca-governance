@@ -139,7 +139,6 @@ export async function POST(
         actorId: user.id,
         before: beforeState as any,
         after: JSON.parse(JSON.stringify(updatedProposal)) as any,
-        meta: { decisionType, reason: reason || null, mergeTargetId: mergeTargetId || null } as any,
       });
 
       return updatedProposal;
